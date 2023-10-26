@@ -50,8 +50,6 @@ var filter = (function (nodes, selector) {
     return Array.from(nodes).filter(function (item) { return item.nodeType === 1 && item.matches(selector); });
 });
 
-/* eslint-env browser */
-/* eslint-disable no-use-before-define */
 var stores = new Map();
 /* eslint-enable no-use-before-define */
 /**
@@ -105,7 +103,7 @@ var Store = /** @class */ (function () {
      */
     Store.prototype.setConfig = function (key, value) {
         if (!this._config.has(key)) {
-            throw new Error("Trying to set invalid configuration item: " + key);
+            throw new Error("Trying to set invalid configuration item: ".concat(key));
         }
         // set config
         this._config.set(key, value);
@@ -118,7 +116,7 @@ var Store = /** @class */ (function () {
      */
     Store.prototype.getConfig = function (key) {
         if (!this._config.has(key)) {
-            throw new Error("Invalid configuration item requested: " + key);
+            throw new Error("Invalid configuration item requested: ".concat(key));
         }
         return this._config.get(key);
     };
@@ -215,7 +213,7 @@ function addEventListener(element, eventName, callback) {
         return;
     }
     element.addEventListener(eventName, callback);
-    store(element).setData("event" + eventName, callback);
+    store(element).setData("event".concat(eventName), callback);
 }
 /**
  * @param {Array<HTMLElement>|HTMLElement} element
@@ -228,8 +226,8 @@ function removeEventListener(element, eventName) {
         }
         return;
     }
-    element.removeEventListener(eventName, store(element).getData("event" + eventName));
-    store(element).deleteData("event" + eventName);
+    element.removeEventListener(eventName, store(element).getData("event".concat(eventName)));
+    store(element).deleteData("event".concat(eventName));
 }
 
 /**
@@ -722,6 +720,16 @@ var removeItemEvents = function (items) {
     removeEventListener(items, 'mouseenter');
     removeEventListener(items, 'mouseleave');
 };
+/**
+ *
+ * remove Store map values
+ * @param {Array|NodeList} items
+ */
+var removeStoreData = function (items) {
+    if (items instanceof Array) {
+        items.forEach(function (element) { return stores.delete(element); });
+    }
+};
 // Remove container events
 var removeContainerEvents = function (originContainer, previousContainer) {
     if (originContainer) {
@@ -818,6 +826,8 @@ var destroySortable = function (sortableElement) {
     removeEventListener(handles, 'mousedown');
     removeItemEvents(items);
     removeItemData(items);
+    removeStoreData(items);
+    removeStoreData([sortableElement]);
     removeContainerEvents(originContainer, previousContainer);
     // clear sortable flag
     sortableElement.isSortable = false;
@@ -921,7 +931,7 @@ function sortable(sortableElements, options) {
         // log deprecation
         ['connectWith', 'disableIEFix'].forEach(function (configKey) {
             if (Object.prototype.hasOwnProperty.call(options, configKey) && options[configKey] !== null) {
-                console.warn("HTML5Sortable: You are using the deprecated configuration \"" + configKey + "\". This will be removed in an upcoming version, make sure to migrate to the new options when updating.");
+                console.warn("HTML5Sortable: You are using the deprecated configuration \"".concat(configKey, "\". This will be removed in an upcoming version, make sure to migrate to the new options when updating."));
             }
         });
         // merge options with default options
@@ -1255,7 +1265,7 @@ function sortable(sortableElements, options) {
                     return data.placeholder;
                 });
                 // check if element is not in placeholders
-                if (placeholders.indexOf(element) === -1 && sortableElement === element && !filter(element.children, options.items).length) {
+                if (placeholders.indexOf(element) === -1 && sortableElement === element) {
                     placeholders.forEach(function (element) { return element.remove(); });
                     element.appendChild(store(sortableElement).placeholder);
                 }
@@ -1270,7 +1280,7 @@ function sortable(sortableElements, options) {
                 return;
             }
             var options = addData(sortableElement, 'opts');
-            if (parseInt(options.maxItems) && filter(sortableElement.children, addData(sortableElement, 'items')).length > parseInt(options.maxItems) && dragging.parentElement !== sortableElement) {
+            if (parseInt(options.maxItems) && filter(sortableElement.children, addData(sortableElement, 'items')).length >= parseInt(options.maxItems) && dragging.parentElement !== sortableElement) {
                 return;
             }
             e.preventDefault();
@@ -1302,4 +1312,4 @@ sortable.__testing = {
     removeContainerEvents: removeContainerEvents
 };
 
-export default sortable;
+export { sortable as default };
